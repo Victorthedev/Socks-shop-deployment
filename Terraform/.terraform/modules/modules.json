@@ -1,0 +1,1 @@
+{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"eks_sg","Source":"registry.terraform.io/terraform-aws-modules/security-group/aws","Version":"5.1.2","Dir":".terraform/modules/eks_sg"}]}
