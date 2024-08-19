@@ -1,4 +1,4 @@
-ariable "aws_region" {
+variable "aws_region" {
   type        = string
   description = "The AWS region to create things in."
   default     = "us-east-1"
@@ -63,7 +63,7 @@ variable "instance_user" {
 variable "instance_type" {
   type        = string
   description = "The instance type to use for the Kubernetes nodes."
-  default     = "t3.medium"
+  default     = "t2.micro"
 }
 
 variable "node_count" {

@@ -13,7 +13,7 @@ locals {
   cluster_name = "${var.project_name}-${random_string.suffix.result}"
 }
 
-# create a random 8-length string character
+# Create a random 8-length string character
 resource "random_string" "suffix" {
   length  = 8
   special = false
@@ -58,12 +58,6 @@ module "eks" {
   cluster_endpoint_public_access           = true
   enable_cluster_creator_admin_permissions = true
 
-  cluster_addons = {
-    aws-ebs-csi-driver = {
-      service_account_role_arn = module.irsa-ebs-csi.iam_role_arn
-    }
-  }
-
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
 
@@ -88,12 +82,12 @@ module "eks" {
   })
 }
 
-# retrieve ARN of AWS-managed policy for the EBS CSI driver
+# Retrieve ARN of AWS-managed policy for the EBS CSI driver
 data "aws_iam_policy" "ebs_csi_policy" {
   arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
 }
 
-# create IAM role to be assumed by EBS CSI driver service in cluster 
+# Create IAM role to be assumed by EBS CSI driver service in cluster
 module "irsa-ebs-csi" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
   version = "5.39.0"
@@ -105,7 +99,7 @@ module "irsa-ebs-csi" {
   oidc_fully_qualified_subjects = ["system:serviceaccount:kube-system:ebs-csi-controller-sa"]
 }
 
-# create sg with ingress and egress rules
+# Create security group with ingress and egress rules
 module "eks_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "5.1.2"
@@ -114,14 +108,14 @@ module "eks_sg" {
   description = "Security group with self ingress, specific open ports, and all egress traffic"
   vpc_id      = module.vpc.vpc_id
 
-  # TODO: make this security group more secure
+  # TODO: Make this security group more secure
 
-  # rule for internal traffic
+  # Rule for internal traffic
   ingress_with_self = [{
     rule = "all-all"
   }]
 
-  # ingress rules for specific ports
+  # Ingress rules for specific ports
   ingress_with_cidr_blocks = [
     {
       from_port   = 22
@@ -167,10 +161,12 @@ module "eks_sg" {
     }
   ]
 
-  # egress rule for all outbound traffic
+  # Egress rule for all outbound traffic
   egress_rules = ["all-all"]
 
   tags = merge(var.project_tags, {
     Name = "${var.project_name}-sg"
   })
 }
+
+
