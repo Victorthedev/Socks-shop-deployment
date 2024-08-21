@@ -32,7 +32,7 @@ Ansible is used to automate the deployment and configuration of the Socks Shop a
 
 #### 2.2. Configuration
 
-* **`inventory.yml`:** Defines the inventory of hosts that Ansible will manage. In this case, it includes the Kubernetes API endpoint, retrieved from Terraform outputs.
+* **`hosts-inventory.yml`:** Defines the inventory of hosts that Ansible will manage. In this case, it includes the Kubernetes API endpoint, retrieved from Terraform outputs.
 * **`socks-shop.yml`:** This Ansible playbook contains tasks for deploying the Socks Shop application:
     * **Namespace Creation:** Creates a dedicated Kubernetes namespace for the application.
     * **Deployment:** Deploys the various components of the Socks Shop application as Kubernetes deployments and services.
@@ -42,7 +42,7 @@ Ansible is used to automate the deployment and configuration of the Socks Shop a
 
 #### 2.3. Execution
 
-1. **Inventory Setup:** Update the `inventory.yml` file with the Kubernetes API endpoint retrieved from Terraform outputs.
+1. **Inventory Setup:** Update the `hosts-inventory.yml` file with the Kubernetes API endpoint retrieved from Terraform outputs.
 2. **Playbook Execution:** Run `ansible-playbook -i inventory.yml --ask-vault-pass socks-shop.yml` to execute the Ansible playbook. This will deploy the Socks Shop application within the Kubernetes cluster.
 
 ### 3. Monitoring and Alerting with Prometheus
