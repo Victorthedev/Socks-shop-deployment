@@ -2,15 +2,16 @@
   become: true
   connection: local
   vars:
-    ansible_python_interpreter: /usr/bin/python3
+    ansible_python_interpreter: /Users/wikiwoo/ansible_venv/bin/python3
+    k8s_kubeconfig: /Users/wikiwoo/.kube/config
     db_host: "{{ hostvars['localhost']['db_endpoint'] }}"
     db_name: "{{ hostvars['localhost']['db_name'] }}"
     db_user: "{{ hostvars['localhost']['db_user'] }}"
     db_password: "{{ hostvars['localhost']['db_password'] }}"
-  
   tasks:
     - name: Create Kubernetes namespace
       kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig }}"
         state: present
         definition:
           apiVersion: v1
@@ -20,6 +21,7 @@
 
     - name: Deploy Socks Shop application
       kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig }}"
         state: present
         definition: "{{ lookup('template', item) }}"
       loop:
@@ -47,6 +49,7 @@
 
     - name: Create Prometheus ServiceMonitor
       kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig }}"
         state: present
         definition: |
           apiVersion: monitoring.coreos.com/v1
@@ -64,5 +67,6 @@
 
     - name: Deploy Prometheus Rules
       kubernetes.core.k8s:
+        kubeconfig: "{{ k8s_kubeconfig }}"
         state: present
         definition: "{{ lookup('file', 'prometheus-rules.yml') }}"
