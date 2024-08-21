@@ -1,0 +1,23 @@
+- hosts: kubernetes
+  become: true
+
+  tasks:
+    - name: Create Prometheus PrometheusRule
+      kubernetes.core.k8s:
+        state: present
+        definition: |
+          apiVersion: monitoring.coreos.com/v1
+          kind: PrometheusRule
+          metadata:
+            name: socks-shop-rules
+            labels:
+              team: frontend
+          spec:
+            groups:
+            - name: socks-shop
+              rules:
+              - alert: HighRequestLatency
+                expr: api_request_duration_seconds{job="socks-shop"} > 1
+                for: 30s
+                labels:
+                  severity: warning

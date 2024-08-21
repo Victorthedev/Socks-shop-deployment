@@ -27,5 +27,24 @@ jobs:
       with:
         version: 'v1.21.0'
 
-    - name: Deploy with Helm
-      run: helm upgrade --install socks-shop ./socks-shop
+    - name: Configure kubectl
+      run: |
+        kubectl config set-cluster socks-shop-cluster --server=$(terraform output eks_cluster_endpoint)
+        kubectl config set-context socks-shop-cluster --cluster=socks-shop-cluster
+        kubectl config use-context socks-shop-cluster
+
+    - name: Set up Ansible
+      uses: ansible/setup-ansible@v1
+
+    - name: Ansible Vault Decrypt
+      run: |
+        ansible-vault decrypt vault.yml --ask-pass
+        echo "DATABASE_PASSWORD=$(ansible-vault get vault.yml database_password)" >> .env
+
+    - name: Deploy with Ansible
+      run: |
+        ansible-playbook -i inventory.yml --ask-vault-pass socks-shop.yml -e "@.env"
+
+    - name: Deploy Prometheus
+      run: |
+        kubectl apply -f prometheus/

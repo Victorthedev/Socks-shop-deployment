@@ -1,0 +1,50 @@
+- hosts: kubernetes
+  become: true
+
+  tasks:
+    - name: Deploy Prometheus Operator
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('file', 'prometheus-operator/all-in-one.yaml') }}"
+
+    - name: Create Prometheus instance
+      kubernetes.core.k8s:
+        state: present
+        definition: |
+          apiVersion: monitoring.coreos.com/v1
+          kind: Prometheus
+          metadata:
+            name: socks-shop
+          spec:
+            serviceAccountName: prometheus-k8s
+            serviceMonitorSelector:
+              matchLabels:
+                team: frontend
+            ruleSelector:
+              matchLabels:
+                team: frontend
+            resources:
+              requests:
+                memory: 400Mi
+
+    - name: Create Alertmanager instance
+      kubernetes.core.k8s:
+        state: present
+        definition: |
+          apiVersion: monitoring.coreos.com/v1
+          kind: Alertmanager
+          metadata:
+            name: socks-shop
+          spec:
+            serviceAccountName: alertmanager-main
+            configuration:
+              receivers:
+              - name: 'slack'
+                slack_configs:
+                - channel: '#socks-shop-alerts'
+                  send_resolved: true
+              route:
+                group_wait: 10s
+                group_interval: 5m
+                repeat_interval: 3h
+                receiver: 'slack'

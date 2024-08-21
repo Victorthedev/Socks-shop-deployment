@@ -1,0 +1,68 @@
+- hosts: localhost
+  become: true
+  connection: local
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    db_host: "{{ hostvars['localhost']['db_endpoint'] }}"
+    db_name: "{{ hostvars['localhost']['db_name'] }}"
+    db_user: "{{ hostvars['localhost']['db_user'] }}"
+    db_password: "{{ hostvars['localhost']['db_password'] }}"
+
+  tasks:
+    - name: Create Kubernetes namespace
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: socks-shop
+
+    - name: Deploy Socks Shop application
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('template', item) }}"
+      loop:
+        - socks-shop/manifests/namespace.yml
+        - socks-shop/manifests/user-db-deployment.yml
+        - socks-shop/manifests/user-db-service.yml
+        - socks-shop/manifests/cart-db-deployment.yml
+        - socks-shop/manifests/cart-db-service.yml
+        - socks-shop/manifests/catalogue-db-deployment.yml
+        - socks-shop/manifests/catalogue-db-service.yml
+        - socks-shop/manifests/front-end.yml
+        - socks-shop/manifests/orders-db-deployment.yml
+        - socks-shop/manifests/orders-db-service.yml
+        - socks-shop/manifests/payment.yml
+        - socks-shop/manifests/queue-master.yml
+        - socks-shop/manifests/rabbitmq.yml
+        - socks-shop/manifests/shipping.yml
+        - socks-shop/manifests/user.yml
+        - socks-shop/manifests/carts.yml
+        - socks-shop/manifests/catalogue.yml
+        - socks-shop/manifests/orders.yml
+        - socks-shop/manifests/web-gateway-deployment.yml
+        - socks-shop/manifests/web-gateway-service.yml
+        - socks-shop/manifests/ingress.yml
+
+    - name: Create Prometheus ServiceMonitor
+      kubernetes.core.k8s:
+        state: present
+        definition: |
+          apiVersion: monitoring.coreos.com/v1
+          kind: ServiceMonitor
+          metadata:
+            name: socks-shop
+            labels:
+              team: frontend
+          spec:
+            selector:
+              matchLabels:
+                app: socks-shop
+            endpoints:
+              - port: web
+
+    - name: Deploy Prometheus Rules
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('file', 'prometheus-rules.yml') }}"
