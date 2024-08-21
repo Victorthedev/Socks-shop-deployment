@@ -7,7 +7,7 @@
     db_name: "{{ hostvars['localhost']['db_name'] }}"
     db_user: "{{ hostvars['localhost']['db_user'] }}"
     db_password: "{{ hostvars['localhost']['db_password'] }}"
-
+  
   tasks:
     - name: Create Kubernetes namespace
       kubernetes.core.k8s:
