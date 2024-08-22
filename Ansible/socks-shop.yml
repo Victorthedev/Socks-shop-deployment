@@ -20,6 +20,15 @@
       environment:
         KUBECONFIG: "{{ k8s_kubeconfig }}"
 
+    - name: Create 'monitoring' namespace
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: monitoring
+
     - name: Replace Prometheus Operator CRDs - Alertmanagers
       command: >
         kubectl replace --force -f {{ crds_directory }}/monitoring.coreos.com_alertmanagers.yaml --kubeconfig={{ k8s_kubeconfig }}
