@@ -4,69 +4,52 @@
   vars:
     ansible_python_interpreter: /Users/wikiwoo/ansible_venv/bin/python3
     k8s_kubeconfig: /Users/wikiwoo/.kube/config
-    db_host: "{{ hostvars['localhost']['db_endpoint'] }}"
-    db_name: "{{ hostvars['localhost']['db_name'] }}"
-    db_user: "{{ hostvars['localhost']['db_user'] }}"
-    db_password: "{{ hostvars['localhost']['db_password'] }}"
+    manifests_directory: /Users/wikiwoo/Socks-shop-deployment/manifests
+    prometheus_manifests_directory: /Users/wikiwoo/Socks-shop-deployment/Prometheus-manifests
+    crds_directory: /Users/wikiwoo/Socks-shop-deployment/prometheus-operator-crd
+    namespace: sock-shop
+
   tasks:
     - name: Create Kubernetes namespace
-      kubernetes.core.k8s:
-        kubeconfig: "{{ k8s_kubeconfig }}"
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Namespace
-          metadata:
-            name: socks-shop
+      command: >
+        kubectl apply -f {{ manifests_directory }} --namespace {{ namespace }} --kubeconfig={{ k8s_kubeconfig }}
 
     - name: Deploy Socks Shop application
-      kubernetes.core.k8s:
-        kubeconfig: "{{ k8s_kubeconfig }}"
-        state: present
-        definition: "{{ lookup('template', item) }}"
-      loop:
-        - socks-shop/manifests/namespace.yml
-        - socks-shop/manifests/user-db-deployment.yml
-        - socks-shop/manifests/user-db-service.yml
-        - socks-shop/manifests/cart-db-deployment.yml
-        - socks-shop/manifests/cart-db-service.yml
-        - socks-shop/manifests/catalogue-db-deployment.yml
-        - socks-shop/manifests/catalogue-db-service.yml
-        - socks-shop/manifests/front-end.yml
-        - socks-shop/manifests/orders-db-deployment.yml
-        - socks-shop/manifests/orders-db-service.yml
-        - socks-shop/manifests/payment.yml
-        - socks-shop/manifests/queue-master.yml
-        - socks-shop/manifests/rabbitmq.yml
-        - socks-shop/manifests/shipping.yml
-        - socks-shop/manifests/user.yml
-        - socks-shop/manifests/carts.yml
-        - socks-shop/manifests/catalogue.yml
-        - socks-shop/manifests/orders.yml
-        - socks-shop/manifests/web-gateway-deployment.yml
-        - socks-shop/manifests/web-gateway-service.yml
-        - socks-shop/manifests/ingress.yml
+      command: >
+        kubectl apply -f {{ manifests_directory }} --namespace {{ namespace }} --kubeconfig={{ k8s_kubeconfig }}
+      environment:
+        KUBECONFIG: "{{ k8s_kubeconfig }}"
+
+    - name: Replace Prometheus Operator CRDs - Alertmanagers
+      command: >
+        kubectl replace --force -f {{ crds_directory }}/monitoring.coreos.com_alertmanagers.yaml --kubeconfig={{ k8s_kubeconfig }}
+
+    - name: Replace Prometheus Operator CRDs - PodMonitors
+      command: >
+        kubectl replace --force -f {{ crds_directory }}/monitoring.coreos.com_podmonitors.yaml --kubeconfig={{ k8s_kubeconfig }}
+
+    - name: Replace Prometheus Operator CRDs - Prometheuses
+      command: >
+        kubectl replace --force -f {{ crds_directory }}/monitoring.coreos.com_prometheuses.yaml --kubeconfig={{ k8s_kubeconfig }}
+
+    - name: Replace Prometheus Operator CRDs - PrometheusRules
+      command: >
+        kubectl replace --force -f {{ crds_directory }}/monitoring.coreos.com_prometheusrules.yaml --kubeconfig={{ k8s_kubeconfig }}
+
+    - name: Replace Prometheus Operator CRDs - ServiceMonitors
+      command: >
+        kubectl replace --force -f {{ crds_directory }}/monitoring.coreos.com_servicemonitors.yaml --kubeconfig={{ k8s_kubeconfig }}
+
+    - name: Replace Prometheus Operator CRDs - ThanosRulers
+      command: >
+        kubectl replace --force -f {{ crds_directory }}/monitoring.coreos.com_thanosrulers.yaml --kubeconfig={{ k8s_kubeconfig }}
 
     - name: Create Prometheus ServiceMonitor
-      kubernetes.core.k8s:
-        kubeconfig: "{{ k8s_kubeconfig }}"
-        state: present
-        definition: |
-          apiVersion: monitoring.coreos.com/v1
-          kind: ServiceMonitor
-          metadata:
-            name: socks-shop
-            labels:
-              team: frontend
-          spec:
-            selector:
-              matchLabels:
-                app: socks-shop
-            endpoints:
-              - port: web
+      command: >
+        kubectl apply -f {{ prometheus_manifests_directory }}/prometheusOperator-serviceMonitor.yaml --kubeconfig={{ k8s_kubeconfig }}
 
     - name: Deploy Prometheus Rules
-      kubernetes.core.k8s:
-        kubeconfig: "{{ k8s_kubeconfig }}"
-        state: present
-        definition: "{{ lookup('file', 'prometheus-rules.yml') }}"
+      command: >
+        kubectl apply -f {{ prometheus_manifests_directory }}/prometheusOperator-prometheusRule.yaml --kubeconfig={{ k8s_kubeconfig }}
+      environment:
+        KUBECONFIG: "{{ k8s_kubeconfig }}"
